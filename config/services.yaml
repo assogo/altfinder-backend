@@ -1,0 +1,26 @@
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+# See also https://symfony.com/doc/current/service_container/import.html
+
+parameters:
+    france_travail.client_id: '%env(FRANCE_TRAVAIL_CLIENT_ID)%'
+    france_travail.client_secret: '%env(FRANCE_TRAVAIL_CLIENT_SECRET)%'
+    france_travail.scope: '%env(FRANCE_TRAVAIL_SCOPE)%'
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+
+    App\Service\FranceTravailService:
+        arguments:
+            $clientId: '%france_travail.client_id%'
+            $clientSecret: '%france_travail.client_secret%'
+            $scope: '%france_travail.scope%'
