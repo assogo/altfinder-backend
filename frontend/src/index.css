@@ -109,6 +109,7 @@ button {
 .search-form input::placeholder { color: var(--accent-gray); }
 
 .search-form button {
+  flex-shrink: 0;
   border: none;
   background: var(--ink);
   color: #fff;
@@ -315,8 +316,7 @@ button {
 @media (max-width: 600px) {
   .page { padding: 20px 16px 48px; }
   .topbar { flex-direction: column; align-items: stretch; }
-  .search-form { max-width: none; flex-direction: column; }
-  .search-form button { width: 100%; }
+  .search-form { max-width: none; }
   .detail-title { font-size: 24px; }
   .job-card-foot { flex-direction: column; align-items: flex-start; gap: 4px; }
   .job-grid { grid-template-columns: 1fr; }
