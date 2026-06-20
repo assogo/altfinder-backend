@@ -60,12 +60,11 @@ class JobRepository extends ServiceEntityRepository
                 ->setParameter('status', $filters['status']);
         }
 
-        $qb->orderBy('j.publishedAt', 'DESC');
-
         $countQb = (clone $qb)->select('COUNT(j.id)');
         $total = (int) $countQb->getQuery()->getSingleScalarResult();
 
         $items = $qb
+            ->orderBy('j.publishedAt', 'DESC')
             ->setFirstResult(($page - 1) * $limit)
             ->setMaxResults($limit)
             ->getQuery()
