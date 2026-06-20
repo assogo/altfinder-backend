@@ -96,6 +96,7 @@ button {
 
 .search-form input {
   flex: 1;
+  min-width: 0;
   border: 1px solid var(--line);
   background: var(--bg-card);
   border-radius: var(--radius-sm);
