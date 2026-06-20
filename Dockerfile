@@ -19,4 +19,4 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 EXPOSE 10000
 
-CMD php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration && php -S 0.0.0.0:${PORT:-10000} -t public
+CMD php bin/console doctrine:schema:update --force --complete && php -S 0.0.0.0:${PORT:-10000} -t public
