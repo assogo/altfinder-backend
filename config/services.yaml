@@ -24,3 +24,6 @@ services:
             $clientId: '%france_travail.client_id%'
             $clientSecret: '%france_travail.client_secret%'
             $scope: '%france_travail.scope%'
+    App\Controller\SyncController:
+        arguments:
+            $syncSecret: '%env(SYNC_SECRET)%'
