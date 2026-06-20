@@ -317,6 +317,8 @@ button {
   .page { padding: 20px 16px 48px; }
   .topbar { flex-direction: column; align-items: stretch; }
   .search-form { max-width: none; }
+  .search-form input { flex: none; width: 64%; min-width: 0; }
+  .search-form button { flex: none; width: 32%; padding: 0 8px; font-size: 13px; }
   .detail-title { font-size: 24px; }
   .job-card-foot { flex-direction: column; align-items: flex-start; gap: 4px; }
   .job-grid { grid-template-columns: 1fr; }
