@@ -13,9 +13,9 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /app
 COPY . .
 
-RUN composer install --no-dev --optimize-autoloader --no-interaction
-
 ENV APP_ENV=prod
+
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 EXPOSE 10000
 
