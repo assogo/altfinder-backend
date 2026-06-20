@@ -140,13 +140,32 @@ class FranceTravailService
 
     private function guessCategory(string $keyword): string
     {
-        $keyword = mb_strtolower($keyword);
+        $normalized = $this->normalize($keyword);
 
         return match (true) {
-            str_contains($keyword, 'dev') => 'developpeur',
-            str_contains($keyword, 'market') => 'marketing',
-            str_contains($keyword, 'design') => 'design',
+            str_contains($normalized, 'dev') => 'developpeur',
+            str_contains($normalized, 'market') => 'marketing',
+            str_contains($normalized, 'design') => 'design',
             default => 'autre',
         };
+    }
+
+    /**
+     * Met en minuscules et retire les accents (é→e, è→e, etc.)
+     * pour fiabiliser les comparaisons de mots-clés.
+     */
+    private function normalize(string $value): string
+    {
+        $value = mb_strtolower($value);
+
+        return strtr($value, [
+            'à' => 'a', 'â' => 'a', 'ä' => 'a',
+            'é' => 'e', 'è' => 'e', 'ê' => 'e', 'ë' => 'e',
+            'î' => 'i', 'ï' => 'i',
+            'ô' => 'o', 'ö' => 'o',
+            'ù' => 'u', 'û' => 'u', 'ü' => 'u',
+            'ç' => 'c',
+            'œ' => 'oe', 'æ' => 'ae',
+        ]);
     }
 }
