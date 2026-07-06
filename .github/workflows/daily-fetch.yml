@@ -1,0 +1,18 @@
+name: Daily Alternance Fetch
+
+on:
+  schedule:
+    - cron: '0 7 * * *'  # tous les jours à 7h UTC (8h ou 9h heure de Lyon)
+  workflow_dispatch:       # permet de lancer manuellement depuis GitHub
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Déclencher la synchronisation AltFinder
+        run: |
+          curl -X GET "https://altfinder-backend.onrender.com/internal/sync?secret=${{ secrets.SYNC_SECRET }}" \
+            --fail \
+            --silent \
+            --show-error
