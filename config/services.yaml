@@ -36,3 +36,8 @@ services:
         arguments:
             $recipientEmail: '%env(ALTFINDER_RECIPIENT_EMAIL)%'
             $senderEmail:    '%env(ALTFINDER_SENDER_EMAIL)%'
+
+    App\Service\UrgentAlertService:
+        arguments:
+            $recipientEmail: '%env(ALTFINDER_RECIPIENT_EMAIL)%'
+            $senderEmail:    '%env(ALTFINDER_SENDER_EMAIL)%'

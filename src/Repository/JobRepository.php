@@ -18,7 +18,9 @@ class JobRepository extends ServiceEntityRepository
 
     public function findOneByExternalId(string $externalId): ?Job
     {
-        return $this->findOneBy(['externalId' => $externalId]);
+        return $this->findOneBy([
+            'externalId' => $externalId,
+        ]);
     }
 
     /**
@@ -37,17 +39,20 @@ class JobRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('j');
 
         if (!empty($filters['keyword'])) {
-            $qb->andWhere('j.title LIKE :keyword OR j.company LIKE :keyword OR j.description LIKE :keyword')
+            $qb
+                ->andWhere('j.title LIKE :keyword OR j.company LIKE :keyword OR j.description LIKE :keyword')
                 ->setParameter('keyword', '%' . $filters['keyword'] . '%');
         }
 
         if (!empty($filters['location'])) {
-            $qb->andWhere('j.location LIKE :location')
+            $qb
+                ->andWhere('j.location LIKE :location')
                 ->setParameter('location', '%' . $filters['location'] . '%');
         }
 
         if (!empty($filters['category'])) {
-            $qb->andWhere('j.category = :category')
+            $qb
+                ->andWhere('j.category = :category')
                 ->setParameter('category', $filters['category']);
         }
 
@@ -56,12 +61,17 @@ class JobRepository extends ServiceEntityRepository
         }
 
         if (!empty($filters['status'])) {
-            $qb->andWhere('j.status = :status')
+            $qb
+                ->andWhere('j.status = :status')
                 ->setParameter('status', $filters['status']);
         }
 
-        $countQb = (clone $qb)->select('COUNT(j.id)');
-        $total = (int) $countQb->getQuery()->getSingleScalarResult();
+        $countQb = clone $qb;
+        $countQb->select('COUNT(j.id)');
+
+        $total = (int) $countQb
+            ->getQuery()
+            ->getSingleScalarResult();
 
         $items = $qb
             ->orderBy('j.publishedAt', 'DESC')
@@ -70,7 +80,10 @@ class JobRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
 
-        return ['items' => $items, 'total' => $total];
+        return [
+            'items' => $items,
+            'total' => $total,
+        ];
     }
 
     /**
@@ -93,7 +106,9 @@ class JobRepository extends ServiceEntityRepository
      */
     public function findStaleJobs(int $olderThanMinutes = 30, int $limit = 500): array
     {
-        $threshold = new \DateTimeImmutable(sprintf('-%d minutes', $olderThanMinutes));
+        $threshold = new \DateTimeImmutable(
+            sprintf('-%d minutes', $olderThanMinutes)
+        );
 
         return $this->createQueryBuilder('j')
             ->andWhere('j.updatedAt < :threshold')
@@ -105,6 +120,9 @@ class JobRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return Job[]
+     */
     public function findCreatedSince(\DateTimeImmutable $since): array
     {
         return $this->createQueryBuilder('j')
@@ -112,6 +130,27 @@ class JobRepository extends ServiceEntityRepository
             ->andWhere('j.isAlternance = true')
             ->setParameter('since', $since)
             ->orderBy('j.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return Job[]
+     */
+    public function findExpiringWithinDays(int $days = 3): array
+    {
+        $now = new \DateTimeImmutable();
+        $limit = $now->modify("+{$days} days");
+
+        return $this->createQueryBuilder('j')
+            ->andWhere('j.expiresAt IS NOT NULL')
+            ->andWhere('j.expiresAt > :now')
+            ->andWhere('j.expiresAt <= :limit')
+            ->andWhere('j.status = :status')
+            ->setParameter('now', $now)
+            ->setParameter('limit', $limit)
+            ->setParameter('status', Job::STATUS_OPEN)
+            ->orderBy('j.expiresAt', 'ASC')
             ->getQuery()
             ->getResult();
     }

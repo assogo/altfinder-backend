@@ -12,6 +12,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use App\Service\UrgentAlertService;
 
 #[AsCommand(
     name: 'app:jobs:fetch',
@@ -24,6 +25,7 @@ class FetchJobsCommand extends Command
         private JobRepository           $jobRepository,
         private EntityManagerInterface  $entityManager,
         private AlternanceExcelService  $excelService,
+        private UrgentAlertService $urgentAlertService,
         private AlternanceMailerService $mailerService,
     ) {
         parent::__construct();
@@ -63,6 +65,14 @@ class FetchJobsCommand extends Command
             }
         } else {
             $io->writeln('Aucune nouvelle offre — pas d\'email envoyé.');
+        }
+        // ── 4. Alerte offres urgentes ───────────────────────────────────────
+        $io->section('Vérification des offres urgentes');
+        $urgentCount = $this->urgentAlertService->checkAndAlert();
+        if ($urgentCount > 0) {
+            $io->writeln(sprintf('⚠️ %d offre(s) expirent dans moins de 3 jours — alerte envoyée.', $urgentCount));
+        } else {
+            $io->writeln('Aucune offre urgente.');
         }
 
         $io->success('Synchronisation terminée.');
