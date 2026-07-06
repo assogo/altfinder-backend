@@ -13,6 +13,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use App\Service\UrgentAlertService;
+use App\Service\HunterContactService;
 
 #[AsCommand(
     name: 'app:jobs:fetch',
@@ -25,6 +26,7 @@ class FetchJobsCommand extends Command
         private JobRepository           $jobRepository,
         private EntityManagerInterface  $entityManager,
         private AlternanceExcelService  $excelService,
+        private HunterContactService $hunterService,
         private UrgentAlertService $urgentAlertService,
         private AlternanceMailerService $mailerService,
     ) {

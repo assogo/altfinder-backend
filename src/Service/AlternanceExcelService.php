@@ -88,7 +88,7 @@ class AlternanceExcelService
             $job->getTitle(),
             $job->getCompany()  ?? '',
             $job->getLocation() ?? '',
-            '',
+            $job->getContact()  ?? '',
             $job->getUrl()      ?? '',
             '',
             '',

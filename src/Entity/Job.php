@@ -51,6 +51,8 @@ class Job
 
     #[ORM\Column(length: 500, nullable: true)]
     private ?string $url = null;
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $contact = null;
 
     #[ORM\Column]
     private \DateTimeImmutable $publishedAt;
@@ -185,6 +187,17 @@ class Job
     public function setUrl(?string $url): static
     {
         $this->url = $url;
+        return $this;
+    }
+
+    public function getContact(): ?string
+    {
+        return $this->contact;
+    }
+
+    public function setContact(?string $contact): static
+    {
+        $this->contact = $contact;
         return $this;
     }
 
