@@ -11,6 +11,7 @@ services:
     _defaults:
         autowire: true
         autoconfigure: true
+        
 
     App\:
         resource: '../src/'
@@ -27,3 +28,11 @@ services:
     App\Controller\SyncController:
         arguments:
             $syncSecret: '%env(SYNC_SECRET)%'
+    App\Service\AlternanceExcelService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    App\Service\AlternanceMailerService:
+        arguments:
+            $recipientEmail: '%env(ALTFINDER_RECIPIENT_EMAIL)%'
+            $senderEmail:    '%env(ALTFINDER_SENDER_EMAIL)%'

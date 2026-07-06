@@ -104,4 +104,15 @@ class JobRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    public function findCreatedSince(\DateTimeImmutable $since): array
+    {
+        return $this->createQueryBuilder('j')
+            ->andWhere('j.createdAt >= :since')
+            ->andWhere('j.isAlternance = true')
+            ->setParameter('since', $since)
+            ->orderBy('j.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }

@@ -1,8 +1,9 @@
 <?php
-
 namespace App\Controller;
-
+use App\Service\AlternanceExcelService;
+use App\Service\AlternanceMailerService;
 use App\Service\FranceTravailService;
+use App\Repository\JobRepository;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -11,7 +12,10 @@ use Symfony\Component\Routing\Attribute\Route;
 class SyncController
 {
     public function __construct(
-        private FranceTravailService $franceTravailService,
+        private FranceTravailService    $franceTravailService,
+        private JobRepository           $jobRepository,
+        private AlternanceExcelService  $excelService,
+        private AlternanceMailerService $mailerService,
         private string $syncSecret,
     ) {
     }
@@ -25,9 +29,19 @@ class SyncController
 
         $result = $this->franceTravailService->fetchAndStoreAlternances();
 
+        if ($result['created'] > 0) {
+            $since   = new \DateTimeImmutable('-1 hour');
+            $newJobs = $this->jobRepository->findCreatedSince($since);
+
+            if (!empty($newJobs)) {
+                $excelPath = $this->excelService->appendJobs($newJobs);
+                $this->mailerService->sendDailyReport($excelPath, count($newJobs));
+            }
+        }
+
         return new JsonResponse([
             'message' => 'Synchronisation effectuée',
-            'result' => $result,
+            'result'  => $result,
         ]);
     }
 }

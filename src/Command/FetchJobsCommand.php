@@ -3,6 +3,8 @@
 namespace App\Command;
 
 use App\Repository\JobRepository;
+use App\Service\AlternanceExcelService;
+use App\Service\AlternanceMailerService;
 use App\Service\FranceTravailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -18,9 +20,11 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class FetchJobsCommand extends Command
 {
     public function __construct(
-        private FranceTravailService $franceTravailService,
-        private JobRepository $jobRepository,
-        private EntityManagerInterface $entityManager,
+        private FranceTravailService    $franceTravailService,
+        private JobRepository           $jobRepository,
+        private EntityManagerInterface  $entityManager,
+        private AlternanceExcelService  $excelService,
+        private AlternanceMailerService $mailerService,
     ) {
         parent::__construct();
     }
@@ -29,22 +33,39 @@ class FetchJobsCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
+        // ── 1. Fetch & store ────────────────────────────────────────────────
         $io->section('Récupération des offres France Travail');
         $result = $this->franceTravailService->fetchAndStoreAlternances();
         $io->writeln(sprintf('Créées : %d / Mises à jour : %d', $result['created'], $result['updated']));
 
+        // ── 2. Refresh statuts ──────────────────────────────────────────────
         $io->section('Rafraîchissement des statuts');
         $stale = $this->jobRepository->findStaleJobs(olderThanMinutes: 30);
-
         foreach ($stale as $job) {
             $job->refreshStatus();
         }
         $this->entityManager->flush();
-
         $io->writeln(sprintf('%d offre(s) ré-évaluée(s)', count($stale)));
 
-        $io->success('Synchronisation terminée.');
+        // ── 3. Export Excel + email ─────────────────────────────────────────
+        if ($result['created'] > 0) {
+            $io->section('Export Excel & envoi email');
 
+            $since   = new \DateTimeImmutable('-1 hour');
+            $newJobs = $this->jobRepository->findCreatedSince($since);
+
+            if (!empty($newJobs)) {
+                $excelPath = $this->excelService->appendJobs($newJobs);
+                $io->writeln(sprintf('Excel mis à jour : %s', $excelPath));
+
+                $this->mailerService->sendDailyReport($excelPath, count($newJobs));
+                $io->writeln('Email envoyé.');
+            }
+        } else {
+            $io->writeln('Aucune nouvelle offre — pas d\'email envoyé.');
+        }
+
+        $io->success('Synchronisation terminée.');
         return Command::SUCCESS;
     }
 }
