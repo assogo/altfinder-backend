@@ -28,19 +28,28 @@ class SyncController
         if (empty($this->syncSecret) || $request->query->get('secret') !== $this->syncSecret) {
             return new JsonResponse(['error' => 'Unauthorized'], 403);
         }
-        $result = $this->franceTravailService->fetchAndStoreAlternances();
-        if ($result['created'] > 0) {
-            $since   = new \DateTimeImmutable('-1 hour');
-            $newJobs = $this->jobRepository->findCreatedSince($since);
-            if (!empty($newJobs)) {
-                $excelPath = $this->excelService->appendJobs($newJobs);
-                $this->mailerService->sendDailyReport($excelPath, count($newJobs));
+
+        try {
+            $result = $this->franceTravailService->fetchAndStoreAlternances();
+            if ($result['created'] > 0) {
+                $since   = new \DateTimeImmutable('-1 hour');
+                $newJobs = $this->jobRepository->findCreatedSince($since);
+                if (!empty($newJobs)) {
+                    $excelPath = $this->excelService->appendJobs($newJobs);
+                    $this->mailerService->sendDailyReport($excelPath, count($newJobs));
+                }
             }
+            return new JsonResponse([
+                'message' => 'Synchronisation effectuée',
+                'result'  => $result,
+            ]);
+        } catch (\Throwable $e) {
+            return new JsonResponse([
+                'error'   => $e->getMessage(),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine(),
+            ], 500);
         }
-        return new JsonResponse([
-            'message' => 'Synchronisation effectuée',
-            'result'  => $result,
-        ]);
     }
 
     #[Route('/migrate', name: 'internal_migrate', methods: ['GET'])]
