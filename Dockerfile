@@ -13,4 +13,4 @@ COPY . .
 ENV APP_ENV=prod
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 EXPOSE 10000
-CMD php bin/console doctrine:schema:update --force --complete && php -S 0.0.0.0:${PORT:-10000} -t public
+CMD php bin/console doctrine:schema:update --force 2>/dev/null; php -S 0.0.0.0:${PORT:-10000} -t public
