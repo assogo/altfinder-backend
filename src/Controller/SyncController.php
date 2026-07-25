@@ -66,4 +66,22 @@ class SyncController
 
         return new JsonResponse(['message' => 'Migration effectuée']);
     }
+
+    #[Route('/schema', name: 'internal_schema', methods: ['GET'])]
+public function schema(Request $request): JsonResponse
+{
+    if (empty($this->syncSecret) || $request->query->get('secret') !== $this->syncSecret) {
+        return new JsonResponse(['error' => 'Unauthorized'], 403);
+    }
+
+    try {
+        $schemaTool = new \Doctrine\ORM\Tools\SchemaTool($this->entityManager);
+        $metadata   = $this->entityManager->getMetadataFactory()->getAllMetadata();
+        $schemaTool->createSchema($metadata);
+
+        return new JsonResponse(['message' => 'Schéma créé avec succès']);
+    } catch (\Throwable $e) {
+        return new JsonResponse(['error' => $e->getMessage()], 500);
+    }
+}
 }
