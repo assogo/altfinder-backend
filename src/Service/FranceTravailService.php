@@ -87,6 +87,8 @@ class FranceTravailService
         $created = 0;
         $updated = 0;
 
+        $this->entityManager->clear();
+
         foreach ($keywords as $keyword) {
             $offers = $this->fetchOffers([
                 'motsCles' => $keyword . ' alternance',
