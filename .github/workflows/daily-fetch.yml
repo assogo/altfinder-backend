@@ -2,7 +2,7 @@ name: Daily Alternance Fetch
 
 on:
   schedule:
-    - cron: '0 7 * * *'  # tous les jours à 7h UTC (8h ou 9h heure de Lyon)
+    - - cron: '0 4 * * *'  # tous les jours à 4h UTC (6h heure de Lyon)
   workflow_dispatch:       # permet de lancer manuellement depuis GitHub
 
 jobs:
