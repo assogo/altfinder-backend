@@ -79,9 +79,8 @@ public function schema(Request $request): JsonResponse
         $metadata   = $this->entityManager->getMetadataFactory()->getAllMetadata();
         $schemaTool->createSchema($metadata);
 
-        return new JsonResponse(['message' => 'Schéma créé avec succès']);
-    } catch (\Throwable $e) {
-        return new JsonResponse(['error' => $e->getMessage()], 500);
-    }
-}
-}
+        return new JsonResponse([
+            'message' => 'Synchronisation effectuée',
+            'result'  => $result,
+            'jobs_in_db' => $this->jobRepository->count([]),
+        ]);
