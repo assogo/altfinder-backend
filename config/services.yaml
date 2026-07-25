@@ -45,3 +45,6 @@ services:
     App\Service\HunterContactService:
         arguments:
             $apiKey: '%env(HUNTER_API_KEY)%'
+    App\Service\LaBonneAlternanceService:
+        arguments:
+            $apiKey: '%env(LA_BONNE_ALTERNANCE_API_KEY)%'

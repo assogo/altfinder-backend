@@ -3,17 +3,18 @@
 namespace App\Command;
 
 use App\Repository\JobRepository;
+use App\Service\LaBonneAlternanceService;
 use App\Service\AlternanceExcelService;
 use App\Service\AlternanceMailerService;
 use App\Service\FranceTravailService;
+use App\Service\HunterContactService;
+use App\Service\UrgentAlertService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use App\Service\UrgentAlertService;
-use App\Service\HunterContactService;
 
 #[AsCommand(
     name: 'app:jobs:fetch',
@@ -22,13 +23,14 @@ use App\Service\HunterContactService;
 class FetchJobsCommand extends Command
 {
     public function __construct(
-        private FranceTravailService    $franceTravailService,
-        private JobRepository           $jobRepository,
-        private EntityManagerInterface  $entityManager,
-        private AlternanceExcelService  $excelService,
-        private HunterContactService $hunterService,
-        private UrgentAlertService $urgentAlertService,
-        private AlternanceMailerService $mailerService,
+        private FranceTravailService     $franceTravailService,
+        private LaBonneAlternanceService $lbaService,
+        private JobRepository            $jobRepository,
+        private EntityManagerInterface   $entityManager,
+        private AlternanceExcelService   $excelService,
+        private HunterContactService     $hunterService,
+        private UrgentAlertService       $urgentAlertService,
+        private AlternanceMailerService  $mailerService,
     ) {
         parent::__construct();
     }
@@ -37,10 +39,16 @@ class FetchJobsCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        // ── 1. Fetch & store ────────────────────────────────────────────────
+        // ── 1. Fetch France Travail ─────────────────────────────────────────
         $io->section('Récupération des offres France Travail');
         $result = $this->franceTravailService->fetchAndStoreAlternances();
         $io->writeln(sprintf('Créées : %d / Mises à jour : %d', $result['created'], $result['updated']));
+
+        // ── 1b. Fetch La Bonne Alternance ───────────────────────────────────
+        $io->section('Récupération des offres La Bonne Alternance');
+        $lbaResult = $this->lbaService->fetchAndStoreAlternances();
+        $io->writeln(sprintf('Créées : %d / Mises à jour : %d', $lbaResult['created'], $lbaResult['updated']));
+        $result['created'] += $lbaResult['created'];
 
         // ── 2. Refresh statuts ──────────────────────────────────────────────
         $io->section('Rafraîchissement des statuts');
@@ -54,20 +62,27 @@ class FetchJobsCommand extends Command
         // ── 3. Export Excel + email ─────────────────────────────────────────
         if ($result['created'] > 0) {
             $io->section('Export Excel & envoi email');
-
             $since   = new \DateTimeImmutable('-1 hour');
             $newJobs = $this->jobRepository->findCreatedSince($since);
-
+            foreach ($newJobs as $job) {
+                if ($job->getCompany() && !$job->getContact()) {
+                    $email = $this->hunterService->findContact($job->getCompany());
+                    if ($email) {
+                        $job->setContact($email);
+                    }
+                }
+            }
+            $this->entityManager->flush();
             if (!empty($newJobs)) {
                 $excelPath = $this->excelService->appendJobs($newJobs);
                 $io->writeln(sprintf('Excel mis à jour : %s', $excelPath));
-
                 $this->mailerService->sendDailyReport($excelPath, count($newJobs));
                 $io->writeln('Email envoyé.');
             }
         } else {
             $io->writeln('Aucune nouvelle offre — pas d\'email envoyé.');
         }
+
         // ── 4. Alerte offres urgentes ───────────────────────────────────────
         $io->section('Vérification des offres urgentes');
         $urgentCount = $this->urgentAlertService->checkAndAlert();
